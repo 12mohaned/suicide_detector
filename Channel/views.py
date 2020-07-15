@@ -2,35 +2,46 @@ from django.shortcuts import render
 import nltk
 from nltk.corpus import stopwords, state_union
 from nltk.tokenize import word_tokenize, PunktSentenceTokenizer
-from nltk.stem import PorterStemmer
+from nltk.stem import PorterStemmer, WordNetLemmatizer
 import csv
+
 stop_words = set(stopwords.words("english"))
+punctuations="?:!.,;--"
+word_lemmatizer = WordNetLemmatizer()
+
 def readcsv():
     texts = []
     with open('test.csv', mode = 'r') as csv_file:
         csv_reader = csv.DictReader(csv_file)
         for row in csv_reader:
-            texts.append(row["text"])
+            text = row["text"]
+            tokenized = word_tokenize(text)
+            for text in tokenized:
+                texts.append(text)
     return texts
+
 Text = readcsv()
 
 def Home(request):
     if request.method == "POST":
         Body = request.POST.get("MessageForm")
         Body_Tokenized = word_tokenize(Body)
-        modifiedBody_Tokenized = remove_stopwords(Body_Tokenized)
-        #print(nltk.pos_tag(modifiedBody_Tokenized))
+        #modifiedBody_Tokenized = remove_stopwords(Body_Tokenized)
+        for word in Body_Tokenized:
+            if not word in punctuations:
+                print(lemmatize_verb(word))
+
     return render(request,template_name = "Channel/Home.html")
 
-#returning the words to it's origin
-def word_stemming(Sentence):
-    Stemmer = PorterStemmer()
-    Stemmed = []
-    for word in Sentence:
-        if not word in stop_words:
-            Stemmed.append(Stemmer.stem(word))
-    return Stemmed
+#returning the verb to it's origin
+def lemmatize_verb(word):
+    word = word_lemmatizer.lemmatize(word, pos = 'v')
+    return word
 
+#returning the adjective to it's origin
+def lemmatize_adjective(word):
+    word = word_lemmatizer.lemmatize(word, pos ='a')
+    return word
 #remove stop words from the speech
 def remove_stopwords(Text):
     Modified_Body = []
